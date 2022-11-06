@@ -7,18 +7,23 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "student")
 public class Student {
 
 	@Id
 	@Column(name = "student_id")
+	@JsonProperty("student_id")
 	private int studentId;
 	
 	@Column(name = "student_name")
+	@JsonProperty("student_name")
 	private String studentName;
 	
 	@Column(name = "lesson_id")
+	@JsonProperty("lesson_id")
 	private String lessonId = "";
 	
 

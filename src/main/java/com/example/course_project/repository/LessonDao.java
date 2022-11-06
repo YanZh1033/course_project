@@ -2,6 +2,7 @@ package com.example.course_project.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -17,6 +18,9 @@ public interface LessonDao extends JpaRepository<Lesson,Integer>{
 	public List<Lesson> findByLessonName(String lessonName);
 	
 	public Optional<Lesson> findByLessonId(int lessonId);
+	
+	public List<Lesson> findAllByLessonIdIn(Set<Integer> lessonIdSet);
+	
 	
 	
 }

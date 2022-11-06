@@ -9,28 +9,35 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "lesson")
 public class Lesson {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "lesson_id")
+	@JsonProperty("lesson_id")
 	private int lessonId;
 	
 	@Column(name = "lesson_name")
+	@JsonProperty("lesson_name")
 	private String lessonName;
 	
 	@Column(name = "day")
+	@JsonProperty("lday")
 	private String day;
 	
 	@Column(name = "start_time")
+	@JsonProperty("start_time")
 	private LocalTime startTime;
 	
 	@Column(name = "end_time")
+	@JsonProperty("end_time")
 	private LocalTime endTime;
 	
 	@Column(name = "credits")
+	@JsonProperty("credits")
 	private int credits;
 	
 
@@ -39,7 +46,8 @@ public class Lesson {
 	}
 
 
-	public Lesson(String lessonName, String day, LocalTime startTime, LocalTime endTime, int credits) {
+	public Lesson(int lessonId, String lessonName, String day, LocalTime startTime, LocalTime endTime, int credits) {
+		this.lessonId = lessonId;
 		this.lessonName = lessonName;
 		this.day = day;
 		this.startTime = startTime;

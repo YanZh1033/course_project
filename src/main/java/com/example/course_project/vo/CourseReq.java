@@ -1,5 +1,7 @@
 package com.example.course_project.vo;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CourseReq {
@@ -27,6 +29,9 @@ public class CourseReq {
 	
 	@JsonProperty("student_name")
 	private String studentName;
+	
+	@JsonProperty("lesson_id_set")
+	private Set<Integer> lessonIdSet;
 
 	public CourseReq() {
 	}
@@ -94,5 +99,15 @@ public class CourseReq {
 	public void setStudentName(String studentName) {
 		this.studentName = studentName;
 	}
+
+	public Set<Integer> getLessonIdSet() {
+		return lessonIdSet;
+	}
+
+	public void setLessonIdSet(Set<Integer> lessonIdSet) {
+		this.lessonIdSet = lessonIdSet;
+	}
+
+	
 
 }

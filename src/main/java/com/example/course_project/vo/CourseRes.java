@@ -43,6 +43,12 @@ public class CourseRes {
 		this.student = student;
 		this.message = message;
 	}
+	
+	public CourseRes(Student student, List<Lesson> lessonList, String message) {
+		this.student = student;
+		this.lessonList = lessonList;
+		this.message = message;
+	}
 
 	public Lesson getLesson() {
 		return lesson;
