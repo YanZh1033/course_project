@@ -1,5 +1,6 @@
 package com.example.course_project.controller;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,7 +10,6 @@ import com.example.course_project.service.ifs.CourseService;
 import com.example.course_project.vo.CourseReq;
 import com.example.course_project.vo.CourseRes;
 
-import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 public class CourseController {
@@ -59,17 +59,10 @@ public class CourseController {
 		return courseService.courseSelection(req.getStudentId(), req.getLessonIdSet());
 	}
 	
-	/* [TestV1]選課(學號、課堂代號) */
-	@ApiIgnore
-	@PostMapping(value = "/api/courseSelectionV1")
-	public CourseRes courseSelectionV1(@RequestBody CourseReq req) {
-		return courseService.courseSelectionV1(req.getStudentId(), req.getLessonIdSet());
-	}
-	
-	/* 退選(學號、課堂代號) */
-	@PostMapping(value = "/api/dropOutLesson")
-	public CourseRes dropOutLesson(@RequestBody CourseReq req) {
-		return courseService.dropOutLesson(req.getStudentId(), req.getLessonIdSet());
+	/* 加退選(學號、課堂代號) 0:加選，1:退選*/
+	@PostMapping(value = "/api/addOrDropLesson")
+	public CourseRes addOrDropLesson(@RequestBody CourseReq req) {
+		return courseService.addOrDropLesson(req.getAddOrDrop(), req.getStudentId(), req.getLessonIdSet());
 	}
 	
 	/* 依學號查詢選上的課資訊 */

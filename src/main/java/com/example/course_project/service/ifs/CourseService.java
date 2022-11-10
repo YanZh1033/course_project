@@ -29,11 +29,8 @@ public interface CourseService {
 	/* 選課(學號、課堂名稱) */
 	public CourseRes courseSelection(int StudentId, Set<Integer> lessonIdSet);
 	
-	/* [TestV1]選課(學號、課堂名稱) */
-	public CourseRes courseSelectionV1(int studentId,Set<Integer> lessonIdSet);
-	
-	/* 退選(學號、課堂代號) */
-	public CourseRes dropOutLesson(int studentId, Set<Integer> lessonIdSet); 
+	/* 加退選(學號、課堂代號) 0:加選，1:退選*/
+	public CourseRes addOrDropLesson(int aw, int studentId, Set<Integer> lessonIdSet) ; 
 	
 	/* 依學號查詢選上的課資訊 */
 	public CourseRes getSelectLessonInfo(int studentId);

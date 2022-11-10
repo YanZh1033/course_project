@@ -32,6 +32,9 @@ public class CourseReq {
 	
 	@JsonProperty("lesson_id_set")
 	private Set<Integer> lessonIdSet;
+	
+	@JsonProperty("add_0_or_drop_1")
+	private int addOrDrop;
 
 	public CourseReq() {
 	}
@@ -108,6 +111,13 @@ public class CourseReq {
 		this.lessonIdSet = lessonIdSet;
 	}
 
-	
+	public int getAddOrDrop() {
+		return addOrDrop;
+	}
+
+	public void setAddOrDrop(int addOrDrop) {
+		this.addOrDrop = addOrDrop;
+	}
+
 
 }

@@ -49,7 +49,7 @@ public class CourseTest {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		Map<String,Object> map = new LinkedHashMap<>();
-		map.put("lesson_id", 8);
+		map.put("lesson_id", null);
 		map.put("lesson_name", "java");
 		map.put("day", "дн");
 		map.put("start_time", "10:00");
@@ -201,7 +201,7 @@ public class CourseTest {
 		Set<Integer> idSet = new HashSet<>();
 		idSet.add(1);
 		idSet.add(2);
-		map.put("student_id", 3);
+		map.put("student_id", 1);
 		map.put("lesson_id_set", idSet);
 		ObjectMapper objectMapper = new ObjectMapper();
 		String mapString = objectMapper.writeValueAsString(map);
@@ -215,7 +215,7 @@ public class CourseTest {
 		System.out.println(rtnMessage);
 		Assert.isTrue(rtnMessage.equals("Update successful"), "Message error!");
 		Map<String,Object> rtnInfo =  (Map<String, Object>)resData.get("student_info");
-		Assert.isTrue(((Integer)rtnInfo.get("student_id")).equals(3), "Account error" );
+		Assert.isTrue(((Integer)rtnInfo.get("student_id")).equals(1), "Account error" );
 		System.out.println(rtnInfo);
 	}
 

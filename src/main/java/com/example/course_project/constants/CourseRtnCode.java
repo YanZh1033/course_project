@@ -8,6 +8,7 @@ public enum CourseRtnCode {
 	FOUND_SUCCESSFUL("200","Data found successful"),			//成功找到資料
 	DELETE_SUCCESSFUL("200","Data delete successful"),			//成功刪除資料
 	VALUE_REQUIRED("400","Value Error (Cannot be null or empty or negative)"),	//輸入值為空、null、空字串、負數
+	SELECT_LESSON_ALREADY("400","Had select the lesson"),		//已選過課
 	NOT_SELECT_LESSON("404","Not select lesson yet"),			//尚未選課
 	CLASH_LESSON("400","Clash with another lesson"),			//課堂衝突
 	NOT_FOUND_LESSON("404","Not found lesson"),					//無此課堂
@@ -18,12 +19,9 @@ public enum CourseRtnCode {
 	DATA_EXISTS("403","Data exists");							//資料已存在
 	
 	
-	
-	
-	
-
 	private String code;
 	private String message;
+	
 	
 	private CourseRtnCode(String code,String message) {
 		this.code = code;

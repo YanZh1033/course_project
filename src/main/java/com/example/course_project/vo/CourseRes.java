@@ -20,6 +20,23 @@ public class CourseRes {
 	private Student student;
 	
 	private String message;
+	
+	private String warn;
+	
+	
+	
+	public String getWarn() {
+		return warn;
+	}
+
+	public void setWarn(String warn) {
+		this.warn = warn;
+	}
+
+	public CourseRes(String warn,String message) {
+		this.warn = warn;
+		this.message = message;
+	}
 
 	public CourseRes() {
 
@@ -64,6 +81,14 @@ public class CourseRes {
 
 	public void setStudent(Student student) {
 		this.student = student;
+	}
+
+	public List<Lesson> getLessonList() {
+		return lessonList;
+	}
+
+	public void setLessonList(List<Lesson> lessonList) {
+		this.lessonList = lessonList;
 	}
 
 	public String getMessage() {
