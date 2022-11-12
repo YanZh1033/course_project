@@ -4,7 +4,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +14,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.example.course_project.vo.CourseRes;
@@ -38,58 +38,49 @@ public class CourseServiceImpl implements CourseService{
 	/* 新增課堂(課堂代號、課堂名稱、星期幾、開始時間、結束時間、學分) */
 	@Override
 	public CourseRes createLesson(int lessonId, String lessonName, String day, String startTime, String endTime, int credits){
-		String lessonIdStr = lessonId+"";
-		String creditsStr = credits+"";
-		List<String> strList = Arrays.asList(lessonIdStr,lessonName,day,creditsStr);
-		//checkTimeFormat():判斷時間格式是否符合:返回LocalTime類
-		LocalTime startLocalTime = checkTimeFormat(startTime);
-		LocalTime endLocalTime = checkTimeFormat(endTime);
-		
-		if(checkStringHasText(strList) || lessonId<=0) {
-			return new CourseRes(("參數值不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(credits <=0 || credits>3) {
-			return new CourseRes(("學分必須是介於1~3"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(!checkDay(day)) {
-			return new CourseRes(("星期格式不符"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(startLocalTime == null || endLocalTime == null) {
-			return new CourseRes(("時間格式不符"),CourseRtnCode.TIME_FORMAT_ERROR.getMessage());
-		}else if(startLocalTime.isAfter(endLocalTime)) {
-			return new CourseRes(("開始時間不能晚於結束時間"),CourseRtnCode.TIME_FORMAT_ERROR.getMessage());
+		List<LocalTime> localTime = checkTimeFormat(startTime,endTime);
+		if(checkValue(lessonId, lessonName, day, startTime, endTime, credits) != null) {
+			return checkValue(lessonId, lessonName, day, startTime, endTime, credits);
 		}
 		Optional<Lesson> lessonOp = lessonDao.findByLessonId(lessonId);
 		if(lessonOp.isPresent()) {
 			return new CourseRes(("課堂代碼已存在"),CourseRtnCode.DATA_EXISTS.getMessage());
 		}else {
-			Lesson lesson = new Lesson(lessonId,lessonName,day,startLocalTime,endLocalTime,credits);
+			Lesson lesson = new Lesson(lessonId,lessonName,day,localTime.get(0),localTime.get(1),credits);
 			lessonDao.save(lesson);
 			return new CourseRes(lesson,CourseRtnCode.CREATE_SUCCESSFUL.getMessage());
 		}
 	}
 	
-	/* 更改課堂資訊([課堂代號]、課堂名稱、星期幾、開始時間、結束時間、學分) */
-	@Override
-	public CourseRes updateLesson(int lessonId, String lessonName, String day, String startTime, String endTime, int credits) {
-		String lessonIdStr = lessonId+"";
-		String creditsStr = credits+"";
-		List<String> strList = Arrays.asList(lessonIdStr,lessonName,day,creditsStr);
-		LocalTime startLocalTime = checkTimeFormat(startTime);
-		LocalTime endLocalTime = checkTimeFormat(endTime);
-		
+	/* 判斷輸入值是否正確(課堂新增修改) */
+	private CourseRes checkValue(int lessonId, String lessonName, String day, String startTime, String endTime, int credits) {
+		List<LocalTime> localTime = checkTimeFormat(startTime,endTime);
+		List<String> strList = Arrays.asList(lessonName, day);
 		if(checkStringHasText(strList) || lessonId<=0) {
 			return new CourseRes(("參數值不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}else if(credits <=0 || credits>3) {
 			return new CourseRes(("學分必須是介於1~3"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}else if(!checkDay(day)) {
 			return new CourseRes(("星期格式不符"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(startLocalTime == null || endLocalTime == null) {
+		}else if(localTime.get(0) == null || localTime.get(1) == null) {
 			return new CourseRes(("時間格式不符"),CourseRtnCode.TIME_FORMAT_ERROR.getMessage());
-		}else if(startLocalTime.isAfter(endLocalTime)) {
+		}else if(localTime.get(0).isAfter(localTime.get(1))) {
 			return new CourseRes(("開始時間不能晚於結束時間"),CourseRtnCode.TIME_FORMAT_ERROR.getMessage());
+		}
+		return null;
+	}
+	
+	/* 更改課堂資訊([課堂代號]、課堂名稱、星期幾、開始時間、結束時間、學分) */
+	@Override
+	public CourseRes updateLesson(int lessonId, String lessonName, String day, String startTime, String endTime, int credits) {
+		List<LocalTime> localTime = checkTimeFormat(startTime,endTime);
+		if(checkValue(lessonId, lessonName, day, startTime, endTime, credits) != null) {
+			return checkValue(lessonId, lessonName, day, startTime, endTime, credits);
 		}
 		Optional<Lesson> lessonOp = lessonDao.findByLessonId(lessonId);
 		if(lessonOp.isPresent()) {
 			Lesson lesson = lessonOp.get();
-			lesson.updateLesson(lessonName, day, startLocalTime, endLocalTime, credits);
+			lesson.updateLesson(lessonName, day, localTime.get(0), localTime.get(1), credits);
 			lessonDao.save(lesson);
 			return new CourseRes(lesson,CourseRtnCode.UPDATE_SUCCESSFUL.getMessage());
 		}else {
@@ -100,8 +91,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 刪除課堂(課堂代號) */
 	@Override
 	public CourseRes deleteLesson(int lessonId) {
-		String lessonIdStr = lessonId+"";
-		if(lessonId<=0 || !StringUtils.hasText(lessonIdStr)) {
+		if(lessonId<=0) {
 			return new CourseRes(("課堂代號不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Lesson> lessonOp = lessonDao.findByLessonId(lessonId);
@@ -119,9 +109,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 新增學生(學號、姓名) */
 	@Override
 	public CourseRes createStudent(int studentId, String studentName) {
-		String studentIdStr = studentId+"";
-		List<String> strList = Arrays.asList(studentIdStr,studentName);
-		if(checkStringHasText(strList) || studentId<=0) {
+		if(studentId<=0 || !StringUtils.hasText(studentName)) {
 			return new CourseRes(("參數值不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
@@ -137,9 +125,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 更改學生資訊([學號]、姓名) */
 	@Override
 	public CourseRes updateStudent(int studentId, String studentName) {
-		String studentIdStr = studentId+"";
-		List<String> strList = Arrays.asList(studentIdStr,studentName);
-		if(checkStringHasText(strList) || studentId<=0) {
+		if(studentId<=0 || !StringUtils.hasText(studentName)) {
 			return new CourseRes(("參數值不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
@@ -155,8 +141,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 刪除學生(學號) */
 	@Override
 	public CourseRes deleteStudent(int studentId) {
-		String studentIdStr = studentId+"";
-		if(studentId<=0 || !StringUtils.hasText(studentIdStr)) {
+		if(studentId<=0) {
 			return new CourseRes(("學號不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
@@ -174,23 +159,25 @@ public class CourseServiceImpl implements CourseService{
 	/* 選課(學號、課堂代號) */
 	@Override
 	public CourseRes courseSelection(int studentId, Set<Integer> lessonIdSet) {
-		String studentIdStr = studentId+"";
-		if(studentId <= 0 || !StringUtils.hasText(studentIdStr)) {
+		if(studentId <= 0) {
 			return new CourseRes(("學號不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(lessonIdSet.isEmpty()) {
+		}else if(CollectionUtils.isEmpty(lessonIdSet)) {
 			return new CourseRes(("選課代號不能為空"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
 		if(studentOp.isPresent()) {
 			Student student = studentOp.get();
-			String notFoundId = checkHasLesson(lessonIdSet);
-			if(StringUtils.hasText(student.getLessonId())) {
-				return new CourseRes(("學生已選過課，請至加選選課"),CourseRtnCode.SELECT_LESSON_ALREADY.getMessage());
-			}else if(StringUtils.hasText(notFoundId)) {
-				return new CourseRes(("無此課堂:"+notFoundId),CourseRtnCode.DATA_NOT_FOUND.getMessage());
+			Map<String,List<Lesson>> notFoundMap = checkHasLesson(lessonIdSet);
+			List<Lesson> existLesson = new ArrayList<>();
+			for(Entry<String,List<Lesson>> entry : notFoundMap.entrySet()) {
+				if(StringUtils.hasText(student.getLessonId())) {
+					return new CourseRes(("學生已選過課，請至加選選課"),CourseRtnCode.SELECT_LESSON_ALREADY.getMessage());
+				}else if(StringUtils.hasText(entry.getKey())) {
+					return new CourseRes(("無此課堂:"+entry.getKey()),CourseRtnCode.DATA_NOT_FOUND.getMessage());
+				}
+				existLesson.addAll(entry.getValue());
 			}
-			List<Lesson> lessonOp = lessonDao.findAllByLessonIdIn(lessonIdSet);
-			Map<Integer,String> reMap = checkClash(lessonOp);
+			Map<Integer,String> reMap = checkClash(existLesson);
 			for(Entry<Integer,String> item : reMap.entrySet()) {
 				switch(item.getKey()) {
 				case 1:
@@ -213,25 +200,27 @@ public class CourseServiceImpl implements CourseService{
 	
 	/* 加退選(學號、課堂代號) 0:加選，1:退選*/
 	public CourseRes addOrDropLesson(int addDrop, int studentId, Set<Integer> lessonIdSet) {
-		String studentIdStr = studentId+"";
-		String addDropStr = addDrop+"";
-		if(studentId <= 0 || !StringUtils.hasText(studentIdStr)) {
+		if(studentId <= 0) {
 			return new CourseRes(("學號不能為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if(lessonIdSet.isEmpty()) {
+		}else if(CollectionUtils.isEmpty(lessonIdSet)) {
 			return new CourseRes(("選課代號不能為空"),CourseRtnCode.VALUE_REQUIRED.getMessage());
-		}else if((addDrop != 0 && addDrop != 1) || !StringUtils.hasText(addDropStr)) {
+		}else if((addDrop != 0 && addDrop != 1)) {
 			return new CourseRes(("0:加選，1:退選，請確認輸入"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
 		if(studentOp.isPresent()) {
 			Student student = studentOp.get();
-				String notFoundId = checkHasLesson(lessonIdSet);
-				String addDropResult = addOrDrop(addDrop, student, lessonIdSet);
+			Map<String,List<Lesson>> notFoundMap = checkHasLesson(lessonIdSet);
+			List<Lesson> existLesson = new ArrayList<>();
+			for(Entry<String,List<Lesson>> entry : notFoundMap.entrySet()) {
 				if(!StringUtils.hasText(student.getLessonId())) {
-					return new CourseRes(("學生尚未選課，請先進行選課"),CourseRtnCode.NOT_SELECT_LESSON.getMessage());
-				}else if(StringUtils.hasText(notFoundId)) {
-					return new CourseRes(("無此課堂:"+notFoundId),CourseRtnCode.DATA_NOT_FOUND.getMessage());
+					return new CourseRes(("學生尚未選課，請先選課"),CourseRtnCode.SELECT_LESSON_ALREADY.getMessage());
+				}else if(StringUtils.hasText(entry.getKey())) {
+					return new CourseRes(("無此課堂:"+entry.getKey()),CourseRtnCode.DATA_NOT_FOUND.getMessage());
 				}
+				existLesson.addAll(entry.getValue());
+			}
+			String addDropResult = addOrDrop(addDrop, student, lessonIdSet);
 				if(addDrop == 0) {
 					if(StringUtils.hasText(addDropResult)) {
 						return new CourseRes(("已選擇相同的課堂:"+addDropResult),CourseRtnCode.SELECT_LESSON_ALREADY.getMessage());
@@ -242,8 +231,8 @@ public class CourseServiceImpl implements CourseService{
 						return new CourseRes(("已選課堂中並無此課堂:"+addDropResult),CourseRtnCode.DATA_NOT_FOUND.getMessage());
 					}
 				}
-			List<Lesson> lessonOp = lessonDao.findAllByLessonIdIn(lessonIdSet);
-			Map<Integer,String> reMap = checkClash(lessonOp);
+			List<Lesson> allLesson = lessonDao.findAllByLessonIdIn(lessonIdSet);
+			Map<Integer,String> reMap = checkClash(allLesson);
 			for(Entry<Integer,String> item : reMap.entrySet()) {
 				switch(item.getKey()) {
 				case 1:
@@ -268,8 +257,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 依學號查詢選上的課資訊 */
 	@Override
 	public CourseRes getSelectLessonInfo(int studentId) {
-		String studentIdStr = studentId+"";
-		if(studentId <= 0 || !StringUtils.hasText(studentIdStr)) {
+		if(studentId <= 0) {
 			return new CourseRes(("學號不得為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Student> studentOp = studentDao.findByStudentId(studentId);
@@ -297,8 +285,7 @@ public class CourseServiceImpl implements CourseService{
 	/* 尋找符合的所有課堂資訊(課堂代碼) */
 	@Override
 	public CourseRes getLessonInfoByLessonId(int lessonId) {
-		String lessonIdStr = lessonId+"";
-		if(lessonId <= 0 || !StringUtils.hasLength(lessonIdStr)) {
+		if(lessonId <= 0) {
 			return new CourseRes(("學號不得為空或小於0"),CourseRtnCode.VALUE_REQUIRED.getMessage());
 		}
 		Optional<Lesson> lessonOp = lessonDao.findByLessonId(lessonId);
@@ -347,10 +334,12 @@ public class CourseServiceImpl implements CourseService{
 	}
 	
 	/* 判斷時間格式; [參數:時間字串]、[返回:(符合格式)->轉為LocalTime] */
-	private LocalTime checkTimeFormat(String timeStr) {
+	private List<LocalTime> checkTimeFormat(String startStr, String endStr) {
 		try {
 			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
-			LocalTime localTime = LocalTime.parse(timeStr, dtf);
+			LocalTime startLocalTime = LocalTime.parse(startStr, dtf);
+			LocalTime endLocalTime = LocalTime.parse(endStr, dtf);
+			List<LocalTime> localTime = Arrays.asList(startLocalTime,endLocalTime);
 			return localTime;
 		} catch (Exception e) {
 			return null;
@@ -369,21 +358,12 @@ public class CourseServiceImpl implements CourseService{
 		}
 		return map;
 	}
-	
-	/* 確認輸入的選課是否有相符DB中課堂; [參數:選擇的課堂代號]、[返回:輸入不存在於DB的課堂代號] */
-	private String checkHasLesson(Set<Integer> selectLesson) {
-		List<Lesson> allLesson = lessonDao.findAll();
-		List<Integer> allLessonId = new ArrayList<>();
-		Set<Integer> selectLesson2 = new HashSet<>();
-		selectLesson2.addAll(selectLesson);
-		for(Lesson itemAll : allLesson) {
-			 allLessonId.add(itemAll.getLessonId());
-		}
-		selectLesson2.removeAll(allLessonId);
-		String setToStr = selectLesson2.toString();
-		String nonId = setToStr.substring(1,setToStr.length()-1);
-		return nonId;
+	/* Set轉String去[] */
+	private String setToStr(Set<Integer> set) {
+		return set.toString().substring(1,set.toString().length()-1);
 	}
+	
+
 	
 	/* 判斷衝堂; [參數:從DB求得的選擇課堂代號]、[返回:switch()判斷值，錯誤值] */
 	private Map<Integer,String> checkClash(List<Lesson> selectLesson) {
@@ -420,11 +400,9 @@ public class CourseServiceImpl implements CourseService{
 			for(int j=i+1; j<idTimeList.size(); j++) {
 				String day2 = idTimeList.get(j).get(1);
 				if(day1.equalsIgnoreCase(day2)) {
-					LocalTime startTime1 = checkTimeFormat(idTimeList.get(i).get(2));
-					LocalTime endTime1 = checkTimeFormat(idTimeList.get(i).get(3));
-					LocalTime startTime2 =  checkTimeFormat(idTimeList.get(j).get(2));
-					LocalTime endTime2 = checkTimeFormat(idTimeList.get(j).get(3));
-					if(isBetween(startTime1, endTime1, startTime2, endTime2)) {
+					List<LocalTime> time1 = checkTimeFormat(idTimeList.get(i).get(2),idTimeList.get(i).get(3));
+					List<LocalTime> time2 = checkTimeFormat(idTimeList.get(j).get(2),idTimeList.get(j).get(3));
+					if(isBetween(time1.get(0), time1.get(1), time2.get(0), time2.get(1))) {
 						reMap.put(2,idTimeList.get(i).get(0)+","+idTimeList.get(j).get(0));
 						return reMap;
 					}
@@ -445,12 +423,29 @@ public class CourseServiceImpl implements CourseService{
 		return !(start1.isAfter(end2)) && !(end1.isBefore(start2));
 	}
 	
+	/* 確認輸入的選課是否有相符DB中課堂; [參數:選擇的課堂代號]、[返回:輸入不存在於DB的課堂代號] */
+	private Map<String,List<Lesson>> checkHasLesson(Set<Integer> selectLesson) {
+		List<Lesson> lesson = lessonDao.findAllByLessonIdIn(selectLesson);
+		List<Integer> lessonId = new ArrayList<>();
+		Set<Integer> noLessonId = new HashSet<>();
+		for(Lesson itemAll : lesson) {
+			lessonId.add(itemAll.getLessonId());
+		}
+		for(Integer item:selectLesson) {
+			if(!lessonId.contains(item)) {
+				noLessonId.add(item);
+			}
+		}
+		Map<String,List<Lesson>> map = new HashMap<>();
+		map.put(setToStr(noLessonId), lesson);
+		return map;
+	}
+	
 	/* 判斷此次選的課是否已經選過; [參數:[加選:0;退選:1],學生,此次選擇的課堂]、[返回:重複選的課程代號] */
 	private String addOrDrop(int addDrop, Student student, Set<Integer> lessonIdSet){
 		Set<Integer> oldLessonIdSet = new HashSet<>();	//學生已選的課堂代號
 		List<Integer> sameNameList = new ArrayList<>();
-		Set<Integer> lessonIdSet2 = new HashSet<>();
-		lessonIdSet2.addAll(lessonIdSet);
+		Set<Integer> lessonIdSet2 = new HashSet<>(lessonIdSet);
 		String lessonStrInfo = student.getLessonId();
 		String[] str = lessonStrInfo.split(",");
 		for(String item : str){
@@ -459,22 +454,18 @@ public class CourseServiceImpl implements CourseService{
 			oldLessonIdSet.add(Integer.parseInt(info[0]));
 		}
 		if(addDrop == 0) {
-			for(Integer oldLessonIdItem:oldLessonIdSet) {
-				for(Integer lessonItem:lessonIdSet) {
-					if(oldLessonIdItem == lessonItem) {
-						sameNameList.add(lessonItem);
-					}
+			for(Integer item:lessonIdSet) {
+				if(oldLessonIdSet.contains(item)) {
+					sameNameList.add(item);
 				}
 			}
-			String listToStr = sameNameList.toString();
-			String sameName = listToStr.substring(1,listToStr.length()-1);
 			lessonIdSet.addAll(oldLessonIdSet);
+			String sameName = sameNameList.toString().substring(1,sameNameList.toString().length()-1);
 			return sameName;
-		} else if(addDrop == 1) {
+		}else if(addDrop == 1) {
 			if(!oldLessonIdSet.containsAll(lessonIdSet)) {
 				lessonIdSet2.removeAll(oldLessonIdSet);
-				String listToStr = lessonIdSet2.toString();
-				String dropLesson = listToStr.substring(1,listToStr.length()-1);
+				String dropLesson = lessonIdSet2.toString().substring(1,lessonIdSet2.toString().length()-1);
 				return dropLesson;
 			}else {
 				oldLessonIdSet.removeAll(lessonIdSet2);
@@ -484,7 +475,5 @@ public class CourseServiceImpl implements CourseService{
 			}
 		}
 		return null;
-	}	
-	
-	
+	}
 }
